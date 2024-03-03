@@ -22,9 +22,6 @@ func main() {
 		panic(fmt.Errorf("SetupConfig: %s", err))
 	}
 
-	srv := server.New(&cfg.Http)
-
-	srv.Setup()
-
+	srv := server.New(&cfg.Http, struct{}{})
 	srv.Start()
 }

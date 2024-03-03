@@ -505,12 +505,12 @@ var file_auth_proto_goTypes = []interface{}{
 }
 var file_auth_proto_depIdxs = []int32{
 	0, // 0: auth.AuthService.SignIn:input_type -> auth.SignInRequest
-	1, // 1: auth.AuthService.SignUp:input_type -> auth.SignUpRequest
+	1, // 1: auth.AuthService.signUp:input_type -> auth.SignUpRequest
 	2, // 2: auth.AuthService.Refresh:input_type -> auth.RefreshRequest
 	3, // 3: auth.AuthService.Logout:input_type -> auth.LogoutRequest
 	6, // 4: auth.AuthService.Auth:input_type -> auth.AuthRequest
 	5, // 5: auth.AuthService.SignIn:output_type -> auth.TokenResponse
-	5, // 6: auth.AuthService.SignUp:output_type -> auth.TokenResponse
+	5, // 6: auth.AuthService.signUp:output_type -> auth.TokenResponse
 	5, // 7: auth.AuthService.Refresh:output_type -> auth.TokenResponse
 	4, // 8: auth.AuthService.Logout:output_type -> auth.Empty
 	7, // 9: auth.AuthService.Auth:output_type -> auth.AuthResponse

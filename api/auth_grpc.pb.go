@@ -48,7 +48,7 @@ func (c *authServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts 
 
 func (c *authServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
 	out := new(TokenResponse)
-	err := c.cc.Invoke(ctx, "/auth.AuthService/SignUp", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/auth.AuthService/signUp", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*
 	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
 func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*TokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method signUp not implemented")
 }
 func (UnimplementedAuthServiceServer) Refresh(context.Context, *RefreshRequest) (*TokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
@@ -154,7 +154,7 @@ func _AuthService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auth.AuthService/SignUp",
+		FullMethod: "/auth.AuthService/signUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).SignUp(ctx, req.(*SignUpRequest))
@@ -228,7 +228,7 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_SignIn_Handler,
 		},
 		{
-			MethodName: "SignUp",
+			MethodName: "signUp",
 			Handler:    _AuthService_SignUp_Handler,
 		},
 		{
