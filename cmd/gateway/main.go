@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/sladkoezhkovo/gateway/internal/config"
+	"github.com/sladkoezhkovo/gateway/internal/server"
 	"github.com/sladkoezhkovo/lib"
 )
 
@@ -21,5 +22,9 @@ func main() {
 		panic(fmt.Errorf("SetupConfig: %s", err))
 	}
 
-	fmt.Println(cfg)
+	srv := server.New(&cfg.Http)
+
+	srv.Setup()
+
+	srv.Start()
 }
