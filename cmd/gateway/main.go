@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/sladkoezhkovo/gateway/internal/config"
-	"github.com/sladkoezhkovo/gateway/internal/server"
+	"github.com/sladkoezhkovo/gateway/internal/router"
 	"github.com/sladkoezhkovo/lib"
 )
 
@@ -22,6 +22,8 @@ func main() {
 		panic(fmt.Errorf("SetupConfig: %s", err))
 	}
 
-	srv := server.New(&cfg.Http, struct{}{})
-	srv.Start()
+	gateway := router.New(&cfg)
+	if err := gateway.Start(); err != nil {
+		panic(err)
+	}
 }
