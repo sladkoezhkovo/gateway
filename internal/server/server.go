@@ -40,7 +40,7 @@ func (s *server) setup() {
 	//	CustomTimeFormat: "2006-01-02 15:04:05.00000",
 	//}))
 
-	// SWITCH LOGGING LOGIC by config.env
+	// TODO SWITCH LOGGING LOGIC by config.env
 	s.e.Use(echomw.RequestLoggerWithConfig(echomw.RequestLoggerConfig{
 		LogStatus: true,
 		LogMethod: true,
@@ -84,7 +84,7 @@ func (s *server) setup() {
 		})
 	})
 
-	s.auth.InitRoutes(s.e)
+	s.e.POST("/sign-in", s.auth.SignUp())
 }
 
 func (s *server) Start() {

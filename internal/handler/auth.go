@@ -19,11 +19,7 @@ func NewAuth(svc AuthService) *AuthHandler {
 	}
 }
 
-func (h *AuthHandler) InitRoutes(e *echo.Echo) {
-	e.POST("/sign-in", h.signUp())
-}
-
-func (h *AuthHandler) signUp() echo.HandlerFunc {
+func (h *AuthHandler) SignUp() echo.HandlerFunc {
 
 	type request struct {
 		Email    string `json:"email"`

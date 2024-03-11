@@ -27,6 +27,7 @@ type AuthServiceClient interface {
 	Refresh(ctx context.Context, in *RefreshRequest, opts ...grpc.CallOption) (*TokenResponse, error)
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*Empty, error)
 	Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
+	CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type authServiceClient struct {
@@ -48,7 +49,7 @@ func (c *authServiceClient) SignIn(ctx context.Context, in *SignInRequest, opts 
 
 func (c *authServiceClient) SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*TokenResponse, error) {
 	out := new(TokenResponse)
-	err := c.cc.Invoke(ctx, "/auth.AuthService/signUp", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/auth.AuthService/SignUp", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +83,15 @@ func (c *authServiceClient) Auth(ctx context.Context, in *AuthRequest, opts ...g
 	return out, nil
 }
 
+func (c *authServiceClient) CreateRole(ctx context.Context, in *CreateRoleRequest, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/auth.AuthService/CreateRole", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -91,6 +101,7 @@ type AuthServiceServer interface {
 	Refresh(context.Context, *RefreshRequest) (*TokenResponse, error)
 	Logout(context.Context, *LogoutRequest) (*Empty, error)
 	Auth(context.Context, *AuthRequest) (*AuthResponse, error)
+	CreateRole(context.Context, *CreateRoleRequest) (*Empty, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -102,7 +113,7 @@ func (UnimplementedAuthServiceServer) SignIn(context.Context, *SignInRequest) (*
 	return nil, status.Errorf(codes.Unimplemented, "method SignIn not implemented")
 }
 func (UnimplementedAuthServiceServer) SignUp(context.Context, *SignUpRequest) (*TokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method signUp not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method SignUp not implemented")
 }
 func (UnimplementedAuthServiceServer) Refresh(context.Context, *RefreshRequest) (*TokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Refresh not implemented")
@@ -112,6 +123,9 @@ func (UnimplementedAuthServiceServer) Logout(context.Context, *LogoutRequest) (*
 }
 func (UnimplementedAuthServiceServer) Auth(context.Context, *AuthRequest) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
+}
+func (UnimplementedAuthServiceServer) CreateRole(context.Context, *CreateRoleRequest) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRole not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -154,7 +168,7 @@ func _AuthService_SignUp_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auth.AuthService/signUp",
+		FullMethod: "/auth.AuthService/SignUp",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthServiceServer).SignUp(ctx, req.(*SignUpRequest))
@@ -216,6 +230,24 @@ func _AuthService_Auth_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_CreateRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).CreateRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auth.AuthService/CreateRole",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).CreateRole(ctx, req.(*CreateRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -228,7 +260,7 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthService_SignIn_Handler,
 		},
 		{
-			MethodName: "signUp",
+			MethodName: "SignUp",
 			Handler:    _AuthService_SignUp_Handler,
 		},
 		{
@@ -242,6 +274,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Auth",
 			Handler:    _AuthService_Auth_Handler,
+		},
+		{
+			MethodName: "CreateRole",
+			Handler:    _AuthService_CreateRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
