@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v5.26.0--rc3
-// source: invoice.proto
+// source: proto/invoice.proto
 
-package api
+package invoice
 
 import (
 	context "context"
@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InvoiceClient interface {
-	Create(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Empty, error)
+	Submit(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type invoiceClient struct {
@@ -33,9 +33,9 @@ func NewInvoiceClient(cc grpc.ClientConnInterface) InvoiceClient {
 	return &invoiceClient{cc}
 }
 
-func (c *invoiceClient) Create(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Empty, error) {
+func (c *invoiceClient) Submit(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
-	err := c.cc.Invoke(ctx, "/invoice.Invoice/Create", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/invoice.Invoice/Submit", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *invoiceClient) Create(ctx context.Context, in *Request, opts ...grpc.Ca
 // All implementations must embed UnimplementedInvoiceServer
 // for forward compatibility
 type InvoiceServer interface {
-	Create(context.Context, *Request) (*Empty, error)
+	Submit(context.Context, *Request) (*Empty, error)
 	mustEmbedUnimplementedInvoiceServer()
 }
 
@@ -54,8 +54,8 @@ type InvoiceServer interface {
 type UnimplementedInvoiceServer struct {
 }
 
-func (UnimplementedInvoiceServer) Create(context.Context, *Request) (*Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+func (UnimplementedInvoiceServer) Submit(context.Context, *Request) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Submit not implemented")
 }
 func (UnimplementedInvoiceServer) mustEmbedUnimplementedInvoiceServer() {}
 
@@ -70,20 +70,20 @@ func RegisterInvoiceServer(s grpc.ServiceRegistrar, srv InvoiceServer) {
 	s.RegisterService(&Invoice_ServiceDesc, srv)
 }
 
-func _Invoice_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Invoice_Submit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InvoiceServer).Create(ctx, in)
+		return srv.(InvoiceServer).Submit(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/invoice.Invoice/Create",
+		FullMethod: "/invoice.Invoice/Submit",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InvoiceServer).Create(ctx, req.(*Request))
+		return srv.(InvoiceServer).Submit(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -96,10 +96,10 @@ var Invoice_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*InvoiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Create",
-			Handler:    _Invoice_Create_Handler,
+			MethodName: "Submit",
+			Handler:    _Invoice_Submit_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "invoice.proto",
+	Metadata: "proto/invoice.proto",
 }

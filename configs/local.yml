@@ -1,3 +1,12 @@
 env: local
+
 http:
   port: 8000
+
+auth:
+  host: localhost
+  port: 5081
+
+admin:
+  host: localhost
+  port: 5082

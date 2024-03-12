@@ -1,3 +1,12 @@
-env: local
+env: dev
+
 http:
   port: 8000
+
+auth:
+  host: # TODO set host
+  port: 5081
+
+admin:
+  host: # TODO set host
+  port: 5082

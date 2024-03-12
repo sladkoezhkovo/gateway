@@ -6,4 +6,6 @@ debug:
 	.\gateway.exe -config configs/local.yml
 
 protoc:
-	protoc -I ./proto ./proto/*.proto  --go_out=. --go-grpc_out=.
+	protoc ./proto/admin.proto 		--go_out=.	--go-grpc_out=.
+	protoc ./proto/auth.proto 		--go_out=.	--go-grpc_out=.
+	protoc ./proto/invoice.proto	--go_out=.  --go-grpc_out=.
