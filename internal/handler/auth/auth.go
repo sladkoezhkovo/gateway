@@ -6,6 +6,7 @@ import (
 	api "github.com/sladkoezhkovo/gateway/api/auth"
 	"github.com/sladkoezhkovo/gateway/internal/entity"
 	"github.com/sladkoezhkovo/gateway/internal/handler"
+	"strings"
 )
 
 type Service interface {
@@ -49,5 +50,48 @@ func (h *Handler) SignIn() fiber.Handler {
 		}
 
 		return handler.Respond(ctx, tokens)
+	}
+}
+
+func (h *Handler) Auth(roleId int64) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+
+		header := ctx.Get("Authorization", "")
+		if header == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "doesnt have authorization header")
+		}
+
+		parts := strings.Split(header, " ")
+		if len(parts) < 2 {
+			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+		}
+
+		approve, err := h.service.Auth(ctx.Context(), parts[1], roleId)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		if !approve {
+			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+		}
+
+		return ctx.Next()
+	}
+}
+
+func (h *Handler) List() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+
+		var bounds api.Bounds
+		if err := ctx.BodyParser(&bounds); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		entries, err := h.service.List(ctx.Context(), bounds.Limit, bounds.Offset)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, entries)
 	}
 }
