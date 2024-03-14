@@ -1,11 +1,20 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/handler/auth"
+)
+
+const (
+	ADMIN         = 1
+	MOD           = 2
+	SHOP_OWNER    = 3
+	FACTORY_OWNER = 4
 )
 
 type router struct {
@@ -15,16 +24,43 @@ type router struct {
 }
 
 func New(cfg *config.Config, authService auth.Service) *router {
+	app := fiber.New(fiber.Config{
+		AppName:       "mail-client-api",
+		CaseSensitive: true,
+		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
+			code := fiber.StatusInternalServerError
+
+			var e *fiber.Error
+			if errors.As(err, &e) {
+				code = e.Code
+			}
+
+			err = ctx.Status(code).JSON(fiber.Map{
+				"message": e.Message,
+			})
+
+			return nil
+		},
+		BodyLimit: 10 << 20,
+	})
+
 	r := &router{
-		app:         fiber.New(),
+		app:         app,
 		cfg:         cfg,
 		authHandler: auth.New(authService),
 	}
 
-	r.app.Use(cors.New())
+	r.app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
+	r.app.Use(logger.New())
 
 	api := r.app.Group("/api")
 	api.Post("/sign-in", r.authHandler.SignIn())
+
+	users := api.Group("/users", r.authHandler.Auth(ADMIN))
+	users.Get("", r.authHandler.List())
 
 	return r
 }
