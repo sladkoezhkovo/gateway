@@ -66,6 +66,10 @@ func (h *Handler) SignUp() fiber.Handler {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
+		if req.RoleId <= 0 {
+			return fiber.NewError(fiber.StatusBadRequest, "role id must be set & be greater than zero")
+		}
+
 		tokens, err := h.service.SignUp(ctx.Context(), &entity.User{
 			Email:    req.Email,
 			Password: req.Password,
