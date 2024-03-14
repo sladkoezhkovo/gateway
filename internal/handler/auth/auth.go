@@ -53,6 +53,32 @@ func (h *Handler) SignIn() fiber.Handler {
 	}
 }
 
+func (h *Handler) SignUp() fiber.Handler {
+	type request struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		RoleId   int64  `json:"roleId"`
+	}
+
+	return func(ctx *fiber.Ctx) error {
+		var req request
+		if err := ctx.BodyParser(&req); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		tokens, err := h.service.SignUp(ctx.Context(), &entity.User{
+			Email:    req.Email,
+			Password: req.Password,
+			Role:     entity.Role{Id: req.RoleId},
+		})
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, tokens)
+	}
+}
+
 func (h *Handler) Auth(roleId int64) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
@@ -72,7 +98,7 @@ func (h *Handler) Auth(roleId int64) fiber.Handler {
 		}
 
 		if !approve {
-			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+			return fiber.NewError(fiber.StatusUnauthorized, "insufficient permission")
 		}
 
 		return ctx.Next()
