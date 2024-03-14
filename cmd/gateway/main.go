@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/router"
+	"github.com/sladkoezhkovo/gateway/internal/service/auth"
 	"github.com/sladkoezhkovo/lib"
 )
 
@@ -22,7 +23,12 @@ func main() {
 		panic(fmt.Errorf("SetupConfig: %s", err))
 	}
 
-	gateway := router.New(&cfg)
+	authService, err := auth.New(cfg.Auth)
+	if err != nil {
+		panic(err)
+	}
+
+	gateway := router.New(&cfg, authService)
 	if err := gateway.Start(); err != nil {
 		panic(err)
 	}

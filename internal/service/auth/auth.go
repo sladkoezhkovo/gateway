@@ -2,19 +2,27 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	api "github.com/sladkoezhkovo/gateway/api/auth"
+	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/entity"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type service struct {
 	client api.AuthServiceClient
 }
 
-func New(connection grpc.ClientConnInterface) *service {
-	return &service{
-		client: api.NewAuthServiceClient(connection),
+func New(cfg config.RemoteConfig) (*service, error) {
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
 	}
+
+	return &service{
+		client: api.NewAuthServiceClient(conn),
+	}, nil
 }
 
 func (s *service) SignUp(ctx context.Context, user *entity.User) (*api.TokenResponse, error) {
