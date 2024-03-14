@@ -99,6 +99,8 @@ func (s *service) List(ctx context.Context, limit, offset int32) (*api.ListUserR
 		Offset: offset,
 	}
 
+	fmt.Println(req)
+
 	res, err := s.client.ListUser(ctx, req)
 	if err != nil {
 		return nil, err
