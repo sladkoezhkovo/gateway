@@ -106,3 +106,16 @@ func (s *service) List(ctx context.Context, limit, offset int32) (*api.ListUserR
 
 	return res, nil
 }
+
+func (s *service) FindById(ctx context.Context, id int64) (*api.UserDetails, error) {
+	req := &api.FindUserByIdRequest{
+		Id: id,
+	}
+
+	user, err := s.client.FindUserById(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}

@@ -15,6 +15,8 @@ const (
 	MOD           = 2
 	SHOP_OWNER    = 3
 	FACTORY_OWNER = 4
+
+	AUTHORIZED = 1000
 )
 
 type router struct {
@@ -59,11 +61,11 @@ func New(cfg *config.Config, authService auth.Service) *router {
 	api := r.app.Group("/api")
 	api.Post("/sign-in", r.authHandler.SignIn())
 	api.Post("/sign-up", r.authHandler.Auth(MOD), r.authHandler.SignUp())
-
-	api.Get("/refresh", r.authHandler.Refresh())
+	api.Post("/logout", r.authHandler.Auth(AUTHORIZED), r.authHandler.Logout())
+	api.Post("/refresh", r.authHandler.Refresh())
 
 	api.Get("/users", r.authHandler.Auth(ADMIN), r.authHandler.List())
-
+	api.Get("/users/:id", r.authHandler.Auth(ADMIN), r.authHandler.FindUserById())
 	return r
 }
 

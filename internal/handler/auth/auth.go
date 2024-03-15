@@ -19,7 +19,12 @@ type Service interface {
 	Logout(ctx context.Context, access string) error
 
 	List(ctx context.Context, limit, offset int32) (*api.ListUserResponse, error)
+	FindById(ctx context.Context, id int64) (*api.UserDetails, error)
 }
+
+var (
+	ACCESS_TOKEN = "accessToken"
+)
 
 type Handler struct {
 	service Service
@@ -113,6 +118,8 @@ func (h *Handler) Auth(roleId int64) fiber.Handler {
 			return fiber.NewError(fiber.StatusForbidden, "insufficient permission")
 		}
 
+		ctx.Set(ACCESS_TOKEN, parts[1])
+
 		return ctx.Next()
 	}
 }
@@ -136,6 +143,18 @@ func (h *Handler) Refresh() fiber.Handler {
 	}
 }
 
+func (h *Handler) Logout() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		access := ctx.Get(ACCESS_TOKEN)
+
+		if err := h.service.Logout(ctx.Context(), access); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+
+		return ctx.SendStatus(200)
+	}
+}
+
 func (h *Handler) List() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
@@ -150,5 +169,22 @@ func (h *Handler) List() fiber.Handler {
 		}
 
 		return handler.Respond(ctx, entries)
+	}
+}
+
+func (h *Handler) FindUserById() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		id, err := ctx.ParamsInt("id")
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "bad id")
+		}
+
+		user, err := h.service.FindById(ctx.Context(), int64(id))
+		if err != nil {
+			// TODO process rpc error
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, user)
 	}
 }
