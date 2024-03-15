@@ -6,6 +6,8 @@ import (
 	api "github.com/sladkoezhkovo/gateway/api/auth"
 	"github.com/sladkoezhkovo/gateway/internal/entity"
 	"github.com/sladkoezhkovo/gateway/internal/handler"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"strings"
 )
 
@@ -98,14 +100,39 @@ func (h *Handler) Auth(roleId int64) fiber.Handler {
 
 		approve, err := h.service.Auth(ctx.Context(), parts[1], roleId)
 		if err != nil {
+			if e, ok := status.FromError(err); ok {
+				switch e.Code() {
+				case codes.Unauthenticated:
+					return fiber.NewError(fiber.StatusUnauthorized, e.Message())
+				}
+			}
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
 		if !approve {
-			return fiber.NewError(fiber.StatusUnauthorized, "insufficient permission")
+			return fiber.NewError(fiber.StatusForbidden, "insufficient permission")
 		}
 
 		return ctx.Next()
+	}
+}
+
+func (h *Handler) Refresh() fiber.Handler {
+	type request struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+	return func(ctx *fiber.Ctx) error {
+		var req request
+		if err := ctx.BodyParser(&req); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		tokens, err := h.service.Refresh(ctx.Context(), req.RefreshToken)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, tokens)
 	}
 }
 

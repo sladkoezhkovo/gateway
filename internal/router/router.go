@@ -60,8 +60,9 @@ func New(cfg *config.Config, authService auth.Service) *router {
 	api.Post("/sign-in", r.authHandler.SignIn())
 	api.Post("/sign-up", r.authHandler.Auth(MOD), r.authHandler.SignUp())
 
-	users := api.Group("/users", r.authHandler.Auth(ADMIN))
-	users.Get("", r.authHandler.List())
+	api.Get("/refresh", r.authHandler.Refresh())
+
+	api.Get("/users", r.authHandler.Auth(ADMIN), r.authHandler.List())
 
 	return r
 }
