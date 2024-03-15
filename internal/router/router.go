@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/handler/auth"
+	"github.com/sladkoezhkovo/gateway/internal/handler/user"
 )
 
 const (
@@ -23,9 +24,10 @@ type router struct {
 	app         *fiber.App
 	cfg         *config.Config
 	authHandler *auth.Handler
+	userHandler *user.Handler
 }
 
-func New(cfg *config.Config, authService auth.Service) *router {
+func New(cfg *config.Config, authService auth.Service, userService user.Service) *router {
 	app := fiber.New(fiber.Config{
 		AppName:       "mail-client-api",
 		CaseSensitive: true,
@@ -50,11 +52,13 @@ func New(cfg *config.Config, authService auth.Service) *router {
 		app:         app,
 		cfg:         cfg,
 		authHandler: auth.New(authService),
+		userHandler: user.New(userService),
 	}
 
 	r.app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowOrigins:     "http://localhost:5173",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowCredentials: true,
 	}))
 	r.app.Use(logger.New())
 
@@ -64,8 +68,10 @@ func New(cfg *config.Config, authService auth.Service) *router {
 	api.Post("/logout", r.authHandler.Auth(AUTHORIZED), r.authHandler.Logout())
 	api.Post("/refresh", r.authHandler.Refresh())
 
-	api.Get("/users", r.authHandler.Auth(ADMIN), r.authHandler.List())
-	api.Get("/users/:id", r.authHandler.Auth(ADMIN), r.authHandler.FindUserById())
+	users := api.Group("/users", r.authHandler.Auth(ADMIN))
+	users.Get("/", r.userHandler.List())
+	users.Get("/:id", r.userHandler.FindUserById())
+
 	return r
 }
 

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"strings"
+	"time"
 )
 
 type Service interface {
@@ -41,6 +42,10 @@ func (h *Handler) SignIn() fiber.Handler {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
+	type response struct {
+		AccessToken string `json:"accessToken"`
+	}
 	return func(ctx *fiber.Ctx) error {
 		var req request
 
@@ -53,10 +58,23 @@ func (h *Handler) SignIn() fiber.Handler {
 			Password: req.Password,
 		})
 		if err != nil {
+			// TODO add process for invalid creds error
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		return handler.Respond(ctx, tokens)
+		cookie := new(fiber.Cookie)
+		cookie.Name = "refresh_token"
+		cookie.Value = tokens.RefreshToken
+		cookie.HTTPOnly = true
+		cookie.Expires = time.Now().Add(24 * time.Hour)
+
+		ctx.Cookie(cookie)
+
+		response := &response{
+			AccessToken: tokens.AccessToken,
+		}
+
+		return handler.Respond(ctx, response)
 	}
 }
 
@@ -152,39 +170,5 @@ func (h *Handler) Logout() fiber.Handler {
 		}
 
 		return ctx.SendStatus(200)
-	}
-}
-
-func (h *Handler) List() fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
-
-		var bounds api.Bounds
-		if err := ctx.BodyParser(&bounds); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		entries, err := h.service.List(ctx.Context(), bounds.Limit, bounds.Offset)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		return handler.Respond(ctx, entries)
-	}
-}
-
-func (h *Handler) FindUserById() fiber.Handler {
-	return func(ctx *fiber.Ctx) error {
-		id, err := ctx.ParamsInt("id")
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "bad id")
-		}
-
-		user, err := h.service.FindById(ctx.Context(), int64(id))
-		if err != nil {
-			// TODO process rpc error
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-
-		return handler.Respond(ctx, user)
 	}
 }

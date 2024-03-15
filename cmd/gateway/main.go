@@ -23,12 +23,16 @@ func main() {
 		panic(fmt.Errorf("SetupConfig: %s", err))
 	}
 
-	authService, err := auth.New(cfg.Auth)
+	authGRPC, err := auth.New(cfg.Auth)
 	if err != nil {
 		panic(err)
 	}
 
-	gateway := router.New(&cfg, authService)
+	gateway := router.New(
+		&cfg,
+		authGRPC,
+		authGRPC,
+	)
 	if err := gateway.Start(); err != nil {
 		panic(err)
 	}

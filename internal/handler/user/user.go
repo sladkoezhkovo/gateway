@@ -1,0 +1,57 @@
+package user
+
+import (
+	"context"
+	"github.com/gofiber/fiber/v2"
+	api "github.com/sladkoezhkovo/gateway/api/auth"
+	"github.com/sladkoezhkovo/gateway/internal/handler"
+)
+
+type Service interface {
+	List(ctx context.Context, limit, offset int32) (*api.ListUserResponse, error)
+	FindById(ctx context.Context, id int64) (*api.UserDetails, error)
+}
+
+type Handler struct {
+	service Service
+}
+
+func New(service Service) *Handler {
+	return &Handler{
+		service: service,
+	}
+}
+
+func (h *Handler) List() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+
+		var bounds api.Bounds
+		if err := ctx.BodyParser(&bounds); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		entries, err := h.service.List(ctx.Context(), bounds.Limit, bounds.Offset)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, entries)
+	}
+}
+
+func (h *Handler) FindUserById() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		id, err := ctx.ParamsInt("id")
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "bad id")
+		}
+
+		user, err := h.service.FindById(ctx.Context(), int64(id))
+		if err != nil {
+			// TODO process rpc error
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, user)
+	}
+}
