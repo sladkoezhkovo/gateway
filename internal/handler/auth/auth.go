@@ -62,11 +62,16 @@ func (h *Handler) SignIn() fiber.Handler {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		cookie := new(fiber.Cookie)
-		cookie.Name = "refresh_token"
-		cookie.Value = tokens.RefreshToken
-		cookie.HTTPOnly = true
-		cookie.Expires = time.Now().Add(24 * time.Hour)
+		cookie := &fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    tokens.RefreshToken,
+			Expires:  time.Now().Add(time.Hour * 24),
+			Secure:   true,
+			HTTPOnly: true,
+			//Domain:   "http://127.0.0.1:8000",
+			//Path:     "/api/sign-in",
+			SameSite: "None",
+		}
 
 		ctx.Cookie(cookie)
 
@@ -113,12 +118,12 @@ func (h *Handler) Auth(roleId int64) fiber.Handler {
 
 		header := ctx.Get("Authorization", "")
 		if header == "" {
-			return fiber.NewError(fiber.StatusUnauthorized, "doesnt have authorization header")
+			return fiber.NewError(fiber.StatusBadRequest, "doesnt have authorization header")
 		}
 
 		parts := strings.Split(header, " ")
 		if len(parts) < 2 {
-			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+			return fiber.NewError(fiber.StatusBadRequest, "invalid token")
 		}
 
 		approve, err := h.service.Auth(ctx.Context(), parts[1], roleId)
@@ -142,28 +147,98 @@ func (h *Handler) Auth(roleId int64) fiber.Handler {
 	}
 }
 
-func (h *Handler) Refresh() fiber.Handler {
-	type request struct {
-		RefreshToken string `json:"refreshToken"`
-	}
+func (h *Handler) CheckAuth() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		var req request
-		if err := ctx.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		roleId := int64(ctx.QueryInt("role_id", -1))
+		if roleId == -1 {
+			return fiber.NewError(fiber.StatusBadRequest, "enter a role id")
 		}
 
-		tokens, err := h.service.Refresh(ctx.Context(), req.RefreshToken)
+		header := ctx.Get("Authorization", "")
+		if header == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "no Authorization header")
+		}
+
+		parts := strings.Split(header, " ")
+		if len(parts) < 2 {
+			return fiber.NewError(fiber.StatusBadRequest, "invalid token")
+		}
+
+		approve, err := h.service.Auth(ctx.Context(), parts[1], roleId)
 		if err != nil {
+			if e, ok := status.FromError(err); ok {
+				switch e.Code() {
+				case codes.Unauthenticated:
+					return fiber.NewError(fiber.StatusUnauthorized, e.Message())
+				}
+			}
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		return handler.Respond(ctx, tokens)
+		if !approve {
+			return fiber.NewError(fiber.StatusForbidden, "insufficient permission")
+		}
+
+		return ctx.SendStatus(fiber.StatusOK)
+	}
+}
+
+func (h *Handler) Refresh() fiber.Handler {
+	type response struct {
+		AccessToken string `json:"accessToken"`
+	}
+
+	return func(ctx *fiber.Ctx) error {
+		refresh := ctx.Cookies("refresh_token")
+		if refresh == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "empty refresh token")
+		}
+
+		tokens, err := h.service.Refresh(ctx.Context(), refresh)
+		if err != nil {
+			if e, ok := status.FromError(err); ok {
+				switch e.Code() {
+				case codes.Unauthenticated:
+					return fiber.NewError(fiber.StatusUnauthorized, e.Message())
+				}
+			}
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		cookie := &fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    tokens.RefreshToken,
+			Expires:  time.Now().Add(time.Hour * 24),
+			Secure:   true,
+			HTTPOnly: true,
+			//Domain:   "http://127.0.0.1:8000",
+			//Path:     "/api/refresh",
+			SameSite: "None",
+		}
+
+		ctx.Cookie(cookie)
+
+		response := &response{
+			AccessToken: tokens.AccessToken,
+		}
+
+		return handler.Respond(ctx, response)
 	}
 }
 
 func (h *Handler) Logout() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		access := ctx.Get(ACCESS_TOKEN)
+		header := ctx.Get("Authorization", "")
+		if header == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "doesnt have authorization header")
+		}
+
+		parts := strings.Split(header, " ")
+		if len(parts) < 2 {
+			return fiber.NewError(fiber.StatusUnauthorized, "invalid token")
+		}
+
+		access := parts[1]
 
 		if err := h.service.Logout(ctx.Context(), access); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())

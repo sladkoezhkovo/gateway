@@ -23,10 +23,16 @@ func New(service Service) *Handler {
 }
 
 func (h *Handler) List() fiber.Handler {
+
+	type params struct {
+		Limit  int32 `query:"limit"`
+		Offset int32 `query:"offset"`
+	}
+
 	return func(ctx *fiber.Ctx) error {
 
-		var bounds api.Bounds
-		if err := ctx.BodyParser(&bounds); err != nil {
+		var bounds params
+		if err := ctx.QueryParser(&bounds); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 

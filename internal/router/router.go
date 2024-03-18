@@ -45,7 +45,8 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service)
 
 			return nil
 		},
-		BodyLimit: 10 << 20,
+		BodyLimit:         10 << 20,
+		EnablePrintRoutes: true,
 	})
 
 	r := &router{
@@ -56,7 +57,7 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service)
 	}
 
 	r.app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5173",
+		AllowOrigins:     "https://localhost:5173, http://localhost:5173",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	}))
@@ -65,8 +66,9 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service)
 	api := r.app.Group("/api")
 	api.Post("/sign-in", r.authHandler.SignIn())
 	api.Post("/sign-up", r.authHandler.Auth(MOD), r.authHandler.SignUp())
-	api.Post("/logout", r.authHandler.Auth(AUTHORIZED), r.authHandler.Logout())
-	api.Post("/refresh", r.authHandler.Refresh())
+	api.Post("/logout", r.authHandler.Logout())
+	api.Post("/auth", r.authHandler.CheckAuth())
+	api.Get("/refresh", r.authHandler.Refresh())
 
 	users := api.Group("/users", r.authHandler.Auth(ADMIN))
 	users.Get("/", r.userHandler.List())
