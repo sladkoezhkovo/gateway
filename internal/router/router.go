@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/handler/auth"
+	"github.com/sladkoezhkovo/gateway/internal/handler/role"
 	"github.com/sladkoezhkovo/gateway/internal/handler/user"
 )
 
@@ -25,9 +26,10 @@ type router struct {
 	cfg         *config.Config
 	authHandler *auth.Handler
 	userHandler *user.Handler
+	roleHandler *role.Handler
 }
 
-func New(cfg *config.Config, authService auth.Service, userService user.Service) *router {
+func New(cfg *config.Config, authService auth.Service, userService user.Service, roleService role.Service) *router {
 	app := fiber.New(fiber.Config{
 		AppName:       "mail-client-api",
 		CaseSensitive: true,
@@ -54,6 +56,7 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service)
 		cfg:         cfg,
 		authHandler: auth.New(authService),
 		userHandler: user.New(userService),
+		roleHandler: role.New(roleService),
 	}
 
 	r.app.Use(cors.New(cors.Config{
@@ -73,6 +76,10 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service)
 	users := api.Group("/users", r.authHandler.Auth(ADMIN))
 	users.Get("/", r.userHandler.List())
 	users.Get("/:id", r.userHandler.FindUserById())
+
+	roles := api.Group("/roles")
+	roles.Get("/", r.roleHandler.List())
+	roles.Get("/:id", r.roleHandler.FindById())
 
 	return r
 }

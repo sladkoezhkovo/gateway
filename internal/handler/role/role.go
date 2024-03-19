@@ -1,17 +1,15 @@
-package user
+package role
 
 import (
 	"context"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	api "github.com/sladkoezhkovo/gateway/api/auth"
 	"github.com/sladkoezhkovo/gateway/internal/handler"
 )
 
 type Service interface {
-	List(ctx context.Context, limit, offset int32) (*api.ListUserResponse, error)
-	ListByRole(ctx context.Context, roleId int64, limit, offset int32) (*api.ListUserResponse, error)
-	FindById(ctx context.Context, id int64) (*api.UserDetails, error)
+	List(ctx context.Context, limit, offset int32) (*api.ListRoleResponse, error)
+	FindById(ctx context.Context, id int64) (*api.Role, error)
 }
 
 type Handler struct {
@@ -34,47 +32,32 @@ func (h *Handler) List() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 
 		var bounds params
-		var err error
-
 		if err := ctx.QueryParser(&bounds); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		roleId := ctx.QueryInt("roleId", -1)
-
-		fmt.Println("roleId = ", roleId)
-
-		var entries *api.ListUserResponse
-
-		if roleId != -1 {
-			entries, err = h.service.ListByRole(ctx.Context(), int64(roleId), bounds.Limit, bounds.Offset)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
-		} else {
-			entries, err = h.service.List(ctx.Context(), bounds.Limit, bounds.Offset)
-			if err != nil {
-				return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-			}
+		entries, err := h.service.List(ctx.Context(), bounds.Limit, bounds.Offset)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
 		return handler.Respond(ctx, entries)
 	}
 }
 
-func (h *Handler) FindUserById() fiber.Handler {
+func (h *Handler) FindById() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		id, err := ctx.ParamsInt("id")
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, "bad id")
 		}
 
-		user, err := h.service.FindById(ctx.Context(), int64(id))
+		role, err := h.service.FindById(ctx.Context(), int64(id))
 		if err != nil {
 			// TODO process rpc error
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
 
-		return handler.Respond(ctx, user)
+		return handler.Respond(ctx, role)
 	}
 }

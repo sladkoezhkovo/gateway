@@ -2,30 +2,21 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	api "github.com/sladkoezhkovo/gateway/api/auth"
-	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/entity"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-type service struct {
+type userService struct {
 	client api.AuthServiceClient
 }
 
-func New(cfg config.RemoteConfig) (*service, error) {
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
-	}
-
-	return &service{
-		client: api.NewAuthServiceClient(conn),
+func NewUserService(client api.AuthServiceClient) (*userService, error) {
+	return &userService{
+		client: client,
 	}, nil
 }
 
-func (s *service) SignUp(ctx context.Context, user *entity.User) (*api.TokenResponse, error) {
+func (s *userService) SignUp(ctx context.Context, user *entity.User) (*api.TokenResponse, error) {
 	req := &api.SignUpRequest{
 		Email:    user.Email,
 		Password: user.Password,
@@ -40,7 +31,7 @@ func (s *service) SignUp(ctx context.Context, user *entity.User) (*api.TokenResp
 	return res, nil
 }
 
-func (s *service) SignIn(ctx context.Context, user *entity.User) (*api.TokenResponse, error) {
+func (s *userService) SignIn(ctx context.Context, user *entity.User) (*api.TokenResponse, error) {
 	req := &api.SignInRequest{
 		Email:    user.Email,
 		Password: user.Password,
@@ -54,7 +45,7 @@ func (s *service) SignIn(ctx context.Context, user *entity.User) (*api.TokenResp
 	return res, nil
 }
 
-func (s *service) Refresh(ctx context.Context, refresh string) (*api.TokenResponse, error) {
+func (s *userService) Refresh(ctx context.Context, refresh string) (*api.TokenResponse, error) {
 	req := &api.RefreshRequest{
 		RefreshToken: refresh,
 	}
@@ -67,7 +58,7 @@ func (s *service) Refresh(ctx context.Context, refresh string) (*api.TokenRespon
 	return res, nil
 }
 
-func (s *service) Auth(ctx context.Context, access string, roleId int64) (bool, error) {
+func (s *userService) Auth(ctx context.Context, access string, roleId int64) (bool, error) {
 	req := &api.AuthRequest{
 		AccessToken: access,
 		RoleId:      roleId,
@@ -81,7 +72,7 @@ func (s *service) Auth(ctx context.Context, access string, roleId int64) (bool, 
 	return res.Approved, nil
 }
 
-func (s *service) Logout(ctx context.Context, access string) error {
+func (s *userService) Logout(ctx context.Context, access string) error {
 	req := &api.LogoutRequest{
 		AccessToken: access,
 	}
@@ -93,7 +84,7 @@ func (s *service) Logout(ctx context.Context, access string) error {
 	return nil
 }
 
-func (s *service) List(ctx context.Context, limit, offset int32) (*api.ListUserResponse, error) {
+func (s *userService) List(ctx context.Context, limit, offset int32) (*api.ListUserResponse, error) {
 	req := &api.Bounds{
 		Limit:  limit,
 		Offset: offset,
@@ -107,7 +98,25 @@ func (s *service) List(ctx context.Context, limit, offset int32) (*api.ListUserR
 	return res, nil
 }
 
-func (s *service) FindById(ctx context.Context, id int64) (*api.UserDetails, error) {
+func (s *userService) ListByRole(ctx context.Context, roleId int64, limit, offset int32) (*api.ListUserResponse, error) {
+	bounds := &api.Bounds{
+		Limit:  limit,
+		Offset: offset,
+	}
+
+	req := &api.ListUserByRoleRequest{
+		RoleId: roleId,
+		Bounds: bounds,
+	}
+
+	res, err := s.client.ListUserByRole(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+func (s *userService) FindById(ctx context.Context, id int64) (*api.UserDetails, error) {
 	req := &api.FindUserByIdRequest{
 		Id: id,
 	}
