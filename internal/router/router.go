@@ -83,9 +83,10 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service,
 	users := api.Group("/users", r.authHandler.Auth(ADMIN))
 	users.Get("/", r.userHandler.List())
 	users.Get("/:id", r.userHandler.FindUserById())
-	//users.Delete("/:id". r.userHandler.DeleteUser())
+	users.Delete("/:id", r.userHandler.DeleteUser())
 
 	roles := api.Group("/roles")
+	roles.Post("/", r.authHandler.Auth(ADMIN), r.roleHandler.Create())
 	roles.Get("/", r.roleHandler.List())
 	roles.Get("/:id", r.roleHandler.FindById())
 

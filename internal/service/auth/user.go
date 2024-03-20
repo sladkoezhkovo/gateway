@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"errors"
 	api "github.com/sladkoezhkovo/gateway/api/auth"
 	"github.com/sladkoezhkovo/gateway/internal/entity"
 )
@@ -127,4 +128,8 @@ func (s *userService) FindById(ctx context.Context, id int64) (*api.UserDetails,
 	}
 
 	return user, nil
+}
+
+func (s *userService) Delete(ctx context.Context, id int64) error {
+	return errors.New("unimplemented")
 }

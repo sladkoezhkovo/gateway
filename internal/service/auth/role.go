@@ -15,6 +15,16 @@ func NewRoleService(client api.AuthServiceClient) (*roleService, error) {
 	}, nil
 }
 
+func (s *roleService) Create(ctx context.Context, req *api.CreateRoleRequest) (*api.Role, error) {
+
+	role, err := s.client.CreateRole(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return role, nil
+}
+
 func (s *roleService) List(ctx context.Context, limit, offset int32) (*api.ListRoleResponse, error) {
 	req := &api.Bounds{
 		Limit:  limit,

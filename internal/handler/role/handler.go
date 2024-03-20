@@ -8,6 +8,7 @@ import (
 )
 
 type Service interface {
+	Create(ctx context.Context, req *api.CreateRoleRequest) (*api.Role, error)
 	List(ctx context.Context, limit, offset int32) (*api.ListRoleResponse, error)
 	FindById(ctx context.Context, id int64) (*api.Role, error)
 }
@@ -19,6 +20,33 @@ type Handler struct {
 func New(service Service) *Handler {
 	return &Handler{
 		service: service,
+	}
+}
+
+func (h *Handler) Create() fiber.Handler {
+	type request struct {
+		Name      string `json:"name"`
+		Authority int32  `json:"authority"`
+	}
+
+	return func(ctx *fiber.Ctx) error {
+		var dto request
+
+		if err := ctx.BodyParser(&dto); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "bad request")
+		}
+
+		req := &api.CreateRoleRequest{
+			Name:      dto.Name,
+			Authority: dto.Authority,
+		}
+
+		role, err := h.service.Create(ctx.Context(), req)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return handler.Respond(ctx, role)
 	}
 }
 
