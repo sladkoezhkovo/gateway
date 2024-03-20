@@ -34,7 +34,7 @@ func main() {
 	}
 	authClientGrpc := api.NewAuthServiceClient(authConn)
 
-	adminConn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.Admin.Host, cfg.Auth.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	adminConn, err := grpc.Dial(fmt.Sprintf("%s:%d", cfg.Admin.Host, cfg.Admin.Port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		panic(err)
 	}
