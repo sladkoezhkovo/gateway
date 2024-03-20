@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/sladkoezhkovo/gateway/internal/config"
 	"github.com/sladkoezhkovo/gateway/internal/handler/auth"
+	"github.com/sladkoezhkovo/gateway/internal/handler/city"
 	"github.com/sladkoezhkovo/gateway/internal/handler/role"
 	"github.com/sladkoezhkovo/gateway/internal/handler/user"
 )
@@ -22,14 +23,19 @@ const (
 )
 
 type router struct {
-	app         *fiber.App
-	cfg         *config.Config
+	app *fiber.App
+	cfg *config.Config
+
+	// Auth service
 	authHandler *auth.Handler
 	userHandler *user.Handler
 	roleHandler *role.Handler
+
+	// Admin service
+	cityHandler *city.Handler
 }
 
-func New(cfg *config.Config, authService auth.Service, userService user.Service, roleService role.Service) *router {
+func New(cfg *config.Config, authService auth.Service, userService user.Service, roleService role.Service, cityService city.Service) *router {
 	app := fiber.New(fiber.Config{
 		AppName:       "mail-client-api",
 		CaseSensitive: true,
@@ -57,6 +63,7 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service,
 		authHandler: auth.New(authService),
 		userHandler: user.New(userService),
 		roleHandler: role.New(roleService),
+		cityHandler: city.New(cityService),
 	}
 
 	r.app.Use(cors.New(cors.Config{
@@ -76,10 +83,15 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service,
 	users := api.Group("/users", r.authHandler.Auth(ADMIN))
 	users.Get("/", r.userHandler.List())
 	users.Get("/:id", r.userHandler.FindUserById())
+	//users.Delete("/:id". r.userHandler.DeleteUser())
 
 	roles := api.Group("/roles")
 	roles.Get("/", r.roleHandler.List())
 	roles.Get("/:id", r.roleHandler.FindById())
+
+	cities := api.Group("/cities")
+	cities.Get("/", r.cityHandler.List())
+	cities.Get("/:id", r.cityHandler.FindById())
 
 	return r
 }

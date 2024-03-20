@@ -41,8 +41,10 @@ func (h *Handler) List() fiber.Handler {
 		}
 
 		roleId := ctx.QueryInt("roleId", -1)
+		email := ctx.Query("email", "")
 
 		fmt.Println("roleId = ", roleId)
+		fmt.Println("email = ", email)
 
 		var entries *api.ListUserResponse
 
