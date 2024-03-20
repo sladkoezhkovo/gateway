@@ -51,3 +51,14 @@ func (s *roleService) FindById(ctx context.Context, id int64) (*api.Role, error)
 
 	return role, nil
 }
+
+func (s *roleService) Delete(ctx context.Context, id int64) error {
+
+	req := &api.DeleteRoleRequest{Id: id}
+
+	if _, err := s.client.DeleteRole(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -89,6 +89,7 @@ func New(cfg *config.Config, authService auth.Service, userService user.Service,
 	roles.Post("/", r.authHandler.Auth(ADMIN), r.roleHandler.Create())
 	roles.Get("/", r.roleHandler.List())
 	roles.Get("/:id", r.roleHandler.FindById())
+	roles.Delete("/:id", r.roleHandler.Delete())
 
 	cities := api.Group("/cities")
 	cities.Get("/", r.cityHandler.List())

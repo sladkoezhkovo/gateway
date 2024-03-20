@@ -11,6 +11,8 @@ type Service interface {
 	Create(ctx context.Context, req *api.CreateRoleRequest) (*api.Role, error)
 	List(ctx context.Context, limit, offset int32) (*api.ListRoleResponse, error)
 	FindById(ctx context.Context, id int64) (*api.Role, error)
+
+	Delete(ctx context.Context, id int64) error
 }
 
 type Handler struct {
@@ -87,5 +89,20 @@ func (h *Handler) FindById() fiber.Handler {
 		}
 
 		return handler.Respond(ctx, role)
+	}
+}
+
+func (h *Handler) Delete() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		id, err := ctx.ParamsInt("id")
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "bad id")
+		}
+
+		if err := h.service.Delete(ctx.Context(), int64(id)); err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+
+		return ctx.SendStatus(fiber.StatusOK)
 	}
 }
